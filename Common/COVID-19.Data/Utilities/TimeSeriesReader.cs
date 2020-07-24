@@ -94,10 +94,10 @@ namespace COVID_19.Data.Utilities
             };
         }
 
-        private const string GlobalConfirmedPath = @"..\..\csse_covid_19_data\csse_covid_19_time_series\time_series_covid19_confirmed_global.csv";
-        private const string USConfirmedPath = @"..\..\csse_covid_19_data\csse_covid_19_time_series\time_series_covid19_confirmed_US.csv";
-        private const string GlobalDeathsPath = @"..\..\csse_covid_19_data\csse_covid_19_time_series\time_series_covid19_deaths_global.csv";
-        private const string USDeathsPath = @"..\..\csse_covid_19_data\csse_covid_19_time_series\time_series_covid19_deaths_US.csv";
+        private const string GlobalConfirmedPath = @"wwwroot\data\time_series\time_series_covid19_confirmed_global.csv";
+        private const string USConfirmedPath = @"wwwroot\data\time_series\time_series_covid19_confirmed_US.csv";
+        private const string GlobalDeathsPath = @"wwwroot\data\time_series\time_series_covid19_deaths_global.csv";
+        private const string USDeathsPath = @"wwwroot\data\time_series\time_series_covid19_deaths_US.csv";
 
         public static async Task<TimeSeriesLibrary> ReadData()
         {

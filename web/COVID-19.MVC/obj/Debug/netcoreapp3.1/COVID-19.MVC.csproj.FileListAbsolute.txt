@@ -12,8 +12,6 @@ C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.csprojAssemblyReference.cache
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.AssemblyInfoInputs.cache
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.AssemblyInfo.cs
-C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.csproj.CoreCompileInputs.cache
-C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.RazorAssemblyInfo.cache
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.RazorAssemblyInfo.cs
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.TagHelpers.input.cache
@@ -39,3 +37,10 @@ C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\COVID-19.Data.dll
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\COVID-19.Data.pdb
 C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\Razor\Views\Shared\_KnockoutScriptsPartial.cshtml.g.cs
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.csproj.CoreCompileInputs.cache
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\obj\Debug\netcoreapp3.1\COVID-19.MVC.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\wwwroot\data\time_series\time_series_covid19_confirmed_global.csv
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\wwwroot\data\time_series\time_series_covid19_confirmed_US.csv
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\wwwroot\data\time_series\time_series_covid19_deaths_global.csv
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\wwwroot\data\time_series\time_series_covid19_deaths_US.csv
+C:\Users\jdlew\Documents\GitHub\COVID-19\web\COVID-19.MVC\bin\Debug\netcoreapp3.1\wwwroot\data\time_series\Errata.csv
