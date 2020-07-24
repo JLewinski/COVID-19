@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\archived_data",
+    "\\Common\\COVID-19.Data\\Utilities",
+    "\\csse_covid_19_data",
+    "\\csse_covid_19_data\\csse_covid_19_time_series",
+    "\\web",
+    "\\web\\COVID-19.MVC",
+    "\\web\\COVID-19.MVC\\Controllers",
+    "\\web\\COVID-19.MVC\\Views",
+    "\\web\\COVID-19.MVC\\Views\\Home"
+  ],
+  "SelectedNode": "\\web\\COVID-19.MVC\\Controllers\\HomeController.cs",
+  "PreviewInSolutionExplorer": false
+}

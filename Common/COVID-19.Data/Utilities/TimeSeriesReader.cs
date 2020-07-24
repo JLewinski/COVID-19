@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -113,11 +114,35 @@ namespace COVID_19.Data.Utilities
                 : IsConfirmedCases ? ReadData(USConfirmedPath, 6, 11, 10) : ReadData(USDeathsPath, 6, 12, 10, 11);
         }
 
-        public static async Task<TimeSeriesData> ReadState(string state, bool IsConfirmedCases)
+        public static async Task<TimeSeriesData> ReadCountry(string country, bool IsConfirmedCases)
         {
-            var allUS = await ReadData(false, IsConfirmedCases);
+            var all = await ReadData(true, IsConfirmedCases);
 
-            return allUS.Where(x => x.State == state).Aggregate((x, y) =>
+            return all.Where(x => x.Country == country).Aggregate((x, y) =>
+            {
+                var data = new int[x.Data.Length];
+                for (int i = 0; i < data.Length; i++)
+                {
+                    data[i] = x.Data[i] + y.Data[i];
+                }
+                return new TimeSeriesData
+                {
+                    Country = x.Country,
+                    State = x.State,
+                    Data = data,
+                    Key = x.Country,
+                    Latitude = (x.Latitude + y.Latitude) / 2,
+                    Longitude = (x.Longitude + y.Longitude) / 2,
+                    Population = x.Population + y.Population
+                };
+            });
+        }
+
+        public static async Task<TimeSeriesData> ReadState(string state, string country, bool IsConfirmedCases)
+        {
+            var all = country == "US" ? await ReadData(false, IsConfirmedCases) : await ReadData(true, IsConfirmedCases);
+
+            return all.Where(x => x.Country == country && x.State == (state ?? string.Empty)).Aggregate((x, y) =>
             {
                 var data = new int[x.Data.Length];
                 for (int i = 0; i < data.Length; i++)
@@ -137,9 +162,9 @@ namespace COVID_19.Data.Utilities
             });
         }
 
-        public static async Task<TimeSeriesData> ReadStateChanges(string state, bool IsConfirmedCases)
+        public static async Task<TimeSeriesData> ReadStateChanges(string state, string country, bool IsConfirmedCases)
         {
-            var stateData = await ReadState(state, IsConfirmedCases);
+            var stateData = await ReadState(state, country, IsConfirmedCases);
             for(int i = stateData.Data.Length - 1; i > 0; i--)
             {
                 stateData.Data[i] -= stateData.Data[i - 1];
@@ -150,5 +175,44 @@ namespace COVID_19.Data.Utilities
             }
             return stateData;
         }
+
+        public static async Task<string[]> GetStateNamesArray(string country = "US")
+        {
+            var allStates = await ReadData(country != "US", true);
+            var dic = new Dictionary<string, bool>();
+            foreach(var name in allStates.Where(x => x.Country == country).Select(x => x.State))
+            {
+                if (!dic.ContainsKey(name))
+                {
+                    dic.Add(name, true);
+                }
+            }
+            return dic.Keys.ToArray();
+        }
+
+        public static async Task<Country[]> GetCountryNamesArray()
+        {
+            var all = await ReadData(true, true);
+            var dic = new Dictionary<string, Dictionary<string, bool>>();
+            foreach (var name in all)
+            {
+                if (!dic.ContainsKey(name.Country))
+                {
+                    dic.Add(name.Country, new Dictionary<string, bool>());
+                    dic[name.Country].Add(name.State, true);
+                }
+                else
+                {
+                    dic[name.Country].Add(name.State, true);
+                }
+            }
+            var usNames = await GetStateNamesArray();
+            return dic.Select(x => new Country { Name = x.Key, States = x.Key == "US" ? usNames : x.Value.Keys.ToArray() }).OrderBy(x => x.Name).ToArray();
+        }
+    }
+    public class Country
+    {
+        public string Name { get; set; }
+        public string[] States { get; set; }
     }
 }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using COVID_19.MVC.Models;
+using Microsoft.VisualBasic;
 
 namespace COVID_19.MVC.Controllers
 {
@@ -48,12 +49,16 @@ namespace COVID_19.MVC.Controllers
             return Json(new { success, library, errorMessage });
         }
 
-        public async Task<IActionResult> GetStateData(string state)
+        public async Task<IActionResult> GetStateData(string state, string country = "US")
         {
             try
             {
-                var confirmedCases = await Data.Utilities.TimeSeriesReader.ReadStateChanges(state, true);
-                var deaths = await Data.Utilities.TimeSeriesReader.ReadStateChanges(state, false);
+                if(country == null || country == "undefined")
+                {
+                    throw new ArgumentNullException("Country");
+                }
+                var confirmedCases = await Data.Utilities.TimeSeriesReader.ReadStateChanges(state, country, true);
+                var deaths = await Data.Utilities.TimeSeriesReader.ReadStateChanges(state, country, false);
                 var dates = new string[deaths.Data.Length];
                 var date = DateTime.Parse(Data.Models.TimeSeriesData.StartDate);
                 for(int i = 0; i < deaths.Data.Length; i++)
@@ -69,6 +74,31 @@ namespace COVID_19.MVC.Controllers
                 return Json(new { success = false, errorMessage = e.Message });
             }
 
+        }
+
+        public async Task<IActionResult> GetStateList(string country = "US")
+        {
+            try
+            {
+                return Json(new { success = true, states = await Data.Utilities.TimeSeriesReader.GetStateNamesArray(country) });
+            }
+            catch(Exception e)
+            {
+                return Json(new { success = false, errorMessage = e.Message });
+            }
+        }
+
+        public async Task<IActionResult> GetCountryList()
+        {
+            try
+            {
+                var countries = await Data.Utilities.TimeSeriesReader.GetCountryNamesArray();
+                return Json(new { success = true, countries });
+            }
+            catch (Exception e)
+            {
+                return Json(new { success = false, errorMessage = e.Message });
+            }
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

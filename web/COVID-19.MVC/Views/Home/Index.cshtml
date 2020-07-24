@@ -2,28 +2,19 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
 <div class="row">
     <div class="col">
-        <canvas id="confirmedCasesChart" width="400" height="400"></canvas>
+        <canvas id="stateConfirmedChart" width="400" height="400"></canvas>
     </div>
     <div class="col">
-        <canvas id="deathsChart" width="400" height="400"></canvas>
+        <canvas id="stateDeathsChart" width="400" height="400"></canvas>
+    </div>
+    <div class="col">
+        <canvas id="percentageChart" width="400" height="400"></canvas>
     </div>
 </div>
 <div class="row">
-    <div class="col">
-        <canvas id="confirmedCasesChartUS" width="400" height="400"></canvas>
-    </div>
-    <div class="col">
-        <canvas id="deathsChartUS" width="400" height="400"></canvas>
-    </div>
-</div>
-<div class="form-group">
-    <select id="stateSelect" class="form-control">
+    <select id="stateSelect" class="form-control" data-bind="options: selectedCountry.states">
         <option>Alabama</option>
         <option>California</option>
         <option>Colorado</option>
@@ -33,19 +24,21 @@
         <option>New York</option>
         <option>Ohio</option>
     </select>
-    <button id="getStateInfoButton" class="btn btn-primary">Run</button>
-</div>
-<div class="row">
-    <div class="col">
-        <canvas id="stateConfirmedChart" width="400" height="400"></canvas>
+    <select id="countrySelect" class="form-control" data-bind="options: countries, optionsText: 'name', value: selectedCountry">
+    </select>
+    <div class="slidecontainer">
+        <label for="offsetRange">Offset <span id="offsetSpan"></span></label>
+        <input type="range" min="0" max="30" value="15" class="slider" id="offsetRange" />
     </div>
-    <div class="col">
-        <canvas id="stateDeathsChart" width="400" height="400"></canvas>
+    <div class="slidecontainer">
+        <label for="rangeRange">Range <span id="rangeSpan"></span></label>
+        <input type="range" min="1" max="20" value="5" class="slider" id="rangeRange" />
     </div>
 </div>
 
 @section Scripts
 {
+    <partial name="_KnockoutScriptsPartial" />
     <script src="~/lib/chart/Chart.js"></script>
     <script type="text/javascript">
         var colors = [
@@ -70,39 +63,31 @@
             'rgb(255,0,0)',
             'rgb(255,103,0)'
         ];
+        var self;
         $(() => {
-
-            $('#getStateInfoButton').click(() => {
-                GetStateData($('#stateSelect').val());
+            $.getJSON('@Url.Action("GetCountryList")').done(result => {
+                if (!result.success) {
+                    console.error('Country: ' + result.errorMessage);
+                    return;
+                }
+                self = {
+                    countries: result.countries,
+                    selectedCountry: {}
+                };
+                
+                ko.track(self);
+                ko.applyBindings(self);
             });
-
-            function GetStateData(stateName) {
-                $.getJSON('@Url.Action("GetStateData")?state=' + stateName).done(result => {
-                    if (!result.success) {
-                        console.error(result.errorMessage);
-                        return;
-                    }
-                    
-                    var confirmed = {
-                        data: result.confirmedCases.data,
-                        backgroundColor: colors[7],
-                        borderColor: colors[7]
-                    };
-                    ShowLinePlot('stateConfirmedChart', result.dates, [confirmed], stateName + ' New Confirmed Cases');
-
-                    var deaths = {
-                        data: result.deaths.data,
-                        backgroundColor: colors[9],
-                        borderColor: colors[9]
-                    };
-                    ShowLinePlot('stateDeathsChart', result.dates, [deaths], stateName + ' New Deaths');
-                });
-            }
-
-            function ShowLinePlot(elementId, dates, dataSets, title) {
+            var dates;
+            var confirmedChart;
+            var confirmedData;
+            var deathChart;
+            var deathData;
+            var percentageChart;
+            function CreateBarPlot(elementId, dates, dataSets, title) {
                 var ctx = document.getElementById(elementId);
-                new Chart(ctx, {
-                    type: 'line',
+                return new Chart(ctx, {
+                    type: 'bar',
                     data: {
                         labels: dates,
                         datasets: dataSets
@@ -126,72 +111,104 @@
                 });
             }
 
-            $.getJSON('@Url.Action("GetAllData")').done(result => {
-                if (!result.success) {
-                    console.log(result.library);
-                    result.library.dates = result.library.dates.map(x => {
-                        var date = new Date(x);
-                        return date.toLocaleDateString();
-                    });
-                    var tempRes = result;
-                    var dataSets = [];
-                    const chartIds = ['confirmedCasesChart', 'confirmedCasesChartUS', 'deathsChart', 'deathsChartUS']
-                    const keys = Object.keys(result.library.data);
-                    keys.forEach((key, keyIndex) => {
-                        var data = [];
-                        result.library.data[key] = result.library.data[key].filter(d => d.country == "US" && (d.state == "" || d.state == "Alabama"));
-                        result.library.data[key].forEach((x, dataIndex) => {
-                            var label = x.key ? x.key : x.state ? (x.state + ' ' + x.country) : x.country;
-                            var currentData = x.data;
-                            var total = 0;
-                            currentData.forEach((d, i) => {
-                                var tempTotal = currentData[i];
-                                currentData[i] -= total;
-                                if (currentData[i] < 0) {
-                                    currentData[i] = 0;
-                                }
-                                total = tempTotal;
-                            });
-                            var temp = {
-                                label: label,
-                                data: currentData,
-                                backgroundColor: colors[dataIndex % colors.length],
-                                borderColor: colors[dataIndex & colors.length]
-                            };
-                            data.push(temp);
-                        });
+            function UpdateChart(chart, data, title) {
+                chart.data.datasets[0] = data;
+                if (title) chart.options.title.text = title;
+                chart.update();
+            }
 
-                        var ctx = document.getElementById(chartIds[keyIndex]);
-                        new Chart(ctx, {
-                            type: 'line',
-                            data: {
-                                labels: result.library.dates,
-                                datasets: data
-                            },
-                            options: {
-                                legend: {
-                                    display: false
-                                },
-                                scales: {
-                                    yAxes: [{
-                                        ticks: {
-                                            beginAtZero: true
-                                        }
-                                    }]
-                                },
-                                title: {
-                                    display: true,
-                                    text: key
-                                }
-                            }
-                        });
+            function UpdatePercentageChart() {
+                var offset = 1 * $('#offsetRange').val();
+                var range = 1 * $('#rangeRange').val();
+                $('#offsetSpan').text('(' + offset + ')');
+                $('#rangeSpan').text('(' + range + ')');
+                var percentageData = [];
+                var tempDates = [];
+                var dataIndex = 0;
+                confirmedData.forEach((x, index) => {
+                    var confirmed = 0;
+                    var deaths = 0;
 
-                        dataSets.push(data);
-                    });
-                } else {
-                    //console.error(result.errorMessage);
+                    if (range + offset >= deathData.length) {
+                        return;
+                    }
+
+                    for (var i = 0; i < range; i++) {
+                        confirmed += confirmedData[index + i];
+                        deaths += deathData[index + i + offset];
+                    }
+                    var tempData = confirmed ? deaths / confirmed : deaths;
+
+                    if (tempData || percentageData.length) {
+                        percentageData[dataIndex] = tempData;
+                        tempDates[dataIndex++] = dates[index];// dates[index + offset + range / 2] ?? dates[index + offset + range / 2 - 0.5];
+                    }
+                });
+
+                var popped = percentageData.pop();
+                while (!popped && percentageData.length) {
+                    tempDates.pop();
+                    popped = percentageData.pop();
                 }
+                percentageData.push(popped);
+
+                if (!percentageChart) {
+                    var percentage = {
+                        data: percentageData,
+                        backgroundColor: colors[0],
+                        borderColor: colors[0]
+                    };
+                    percentageChart = CreateBarPlot('percentageChart', tempDates, [percentage], 'Death Percentage');
+                    percentageChart.options.scales.yAxes[0].ticks.max = 0.25;
+                    percentageChart.update();
+                }
+                else {
+                    percentageChart.data.labels = tempDates;
+                    percentageChart.data.datasets[0].data = percentageData;
+                    percentageChart.update();
+                }
+            }
+
+            function GetStateData(stateName) {
+                $.getJSON('@Url.Action("GetStateData")?state=' + stateName + '&country=' + self.selectedCountry.name).done(result => {
+                    if (!result.success) {
+                        console.error('State: ' + result.errorMessage);
+                        return;
+                    }
+                    dates = result.dates;
+                    confirmedData = result.confirmedCases.data;
+                    var confirmed = {
+                        data: confirmedData,
+                        backgroundColor: colors[7],
+                        borderColor: colors[7]
+                    };
+                    if (!confirmedChart) {
+                        confirmedChart = CreateBarPlot('stateConfirmedChart', result.dates, [confirmed], stateName + ' New Confirmed Cases');
+                    } else {
+                        UpdateChart(confirmedChart, confirmed, stateName + ' New Confirmed Cases');
+                    }
+
+                    deathData = result.deaths.data;
+                    var deaths = {
+                        data: deathData,
+                        backgroundColor: colors[8],
+                        borderColor: colors[8]
+                    };
+                    if (!deathChart) {
+                        deathChart = CreateBarPlot('stateDeathsChart', result.dates, [deaths], stateName + ' New Deaths');
+                    } else {
+                        UpdateChart(deathChart, deaths, stateName + ' New Deaths');
+                    }
+
+                    UpdatePercentageChart();
+                });
+            }
+
+            $('select').on('change', () => {
+                GetStateData($('#stateSelect').val());
             });
+
+            $('.slider').on('change', () => { UpdatePercentageChart(); });
         });
     </script>
 }
