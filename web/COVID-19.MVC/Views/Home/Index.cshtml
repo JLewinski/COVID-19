@@ -2,38 +2,49 @@
     ViewData["Title"] = "Home Page";
 }
 
+    <div data-bind="foreach: chartGroups">
+        <div class="row">
+            <div class="col-md-4 col-lg-3">
+                <canvas data-bind="attr: { id: 'stateConfirmedChart' + groupIndex }" id="stateConfirmedChart" width="400" height="400"></canvas>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <canvas data-bind="attr: { id: 'stateDeathsChart' + groupIndex }" id="stateDeathsChart" width="400" height="400"></canvas>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <canvas data-bind="attr: { id: 'percentFatalChart' + groupIndex }" id="percentFatalChart" width="400" height="400"></canvas>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <canvas data-bind="attr: { id: 'percentInfectedChart' + groupIndex }" id="percentInfectedChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <select id="stateSelect" class="form-control" data-bind="options: selectedCountry.states, value: selectedState, event: { change: $root.updateCharts }" value="Alabama">
+                <option>Alabama</option>
+                <option>California</option>
+                <option>Colorado</option>
+                <option>Florida</option>
+                <option>Georgia</option>
+                <option>Maryland</option>
+                <option>New York</option>
+                <option>Ohio</option>
+            </select>
+            <select id="countrySelect" class="form-control" data-bind="options: $root.countries, optionsText: 'name', value: selectedCountry">
+                <option>US</option>
+            </select>
+            <div class="col align-self-end text-right">
+                <div class="slidecontainer">
+                    <label>Offset (<span data-bind="text: offset"></span>)</label>
+                    <input type="range" min="0" max="30" value="15" class="slider" data-bind="value: offset, event: {change: $root.updateFatality}" />
+                </div>
+                <div class="slidecontainer">
+                    <label>Range (<span data-bind="text: range"></span>)</label>
+                    <input type="range" min="1" max="20" value="5" class="slider" data-bind="value: range, event: {change: $root.updateFatality}" />
+                </div>
+            </div>
+        </div>
+    </div>
 <div class="row">
-    <div class="col">
-        <canvas id="stateConfirmedChart" width="400" height="400"></canvas>
-    </div>
-    <div class="col">
-        <canvas id="stateDeathsChart" width="400" height="400"></canvas>
-    </div>
-    <div class="col">
-        <canvas id="percentageChart" width="400" height="400"></canvas>
-    </div>
-</div>
-<div class="row">
-    <select id="stateSelect" class="form-control" data-bind="options: selectedCountry.states">
-        <option>Alabama</option>
-        <option>California</option>
-        <option>Colorado</option>
-        <option>Florida</option>
-        <option>Georgia</option>
-        <option>Maryland</option>
-        <option>New York</option>
-        <option>Ohio</option>
-    </select>
-    <select id="countrySelect" class="form-control" data-bind="options: countries, optionsText: 'name', value: selectedCountry">
-    </select>
-    <div class="slidecontainer">
-        <label for="offsetRange">Offset <span id="offsetSpan"></span></label>
-        <input type="range" min="0" max="30" value="15" class="slider" id="offsetRange" />
-    </div>
-    <div class="slidecontainer">
-        <label for="rangeRange">Range <span id="rangeSpan"></span></label>
-        <input type="range" min="1" max="20" value="5" class="slider" id="rangeRange" />
-    </div>
+
 </div>
 
 @section Scripts
@@ -64,30 +75,21 @@
             'rgb(255,103,0)'
         ];
         var self;
-        $(() => {
-            $.getJSON('@Url.Action("GetCountryList")').done(result => {
-                if (!result.success) {
-                    console.error('Country: ' + result.errorMessage);
-                    return;
-                }
-                self = {
-                    countries: result.countries,
-                    selectedCountry: {}
-                };
+        var dates;
+        var confirmedChart;
+        var confirmedData;
+        var deathChart;
+        var deathData;
+        var percentFatalChart;
+        var percentInfectedChart;
 
-                ko.track(self);
-                ko.applyBindings(self);
-            });
-            var dates;
-            var confirmedChart;
-            var confirmedData;
-            var deathChart;
-            var deathData;
-            var percentageChart;
-            function CreateBarPlot(elementId, dates, dataSets, title) {
+        $(() => {
+
+
+            function CreateBarPlot(elementId, dates, dataSets, title, type) {
                 var ctx = document.getElementById(elementId);
                 return new Chart(ctx, {
-                    type: 'bar',
+                    type: type ?? 'bar',
                     data: {
                         labels: dates,
                         datasets: dataSets
@@ -117,11 +119,9 @@
                 chart.update();
             }
 
-            function UpdatePercentageChart() {
-                var offset = 1 * $('#offsetRange').val();
-                var range = 1 * $('#rangeRange').val();
-                $('#offsetSpan').text('(' + offset + ')');
-                $('#rangeSpan').text('(' + range + ')');
+            function UpdatePercentFatalChart(chartGroup) {
+                var offset = 1*chartGroup.offset;
+                var range = 1*chartGroup.range;
                 var percentageData = [];
                 var tempDates = [];
                 var dataIndex = 0;
@@ -137,7 +137,7 @@
                         confirmed += confirmedData[index + i];
                         deaths += deathData[index + i + offset];
                     }
-                    var tempData = confirmed ? deaths / confirmed : deaths;
+                    var tempData = confirmed ? deaths / confirmed * 100 : deaths * 100;
 
                     if (tempData || percentageData.length) {
                         percentageData[dataIndex] = tempData;
@@ -152,25 +152,27 @@
                 }
                 percentageData.push(popped);
 
-                if (!percentageChart) {
+                if (!chartGroup.percentFatalChart) {
                     var percentage = {
                         data: percentageData,
                         backgroundColor: colors[0],
                         borderColor: colors[0]
                     };
-                    percentageChart = CreateBarPlot('percentageChart', tempDates, [percentage], 'Death Percentage');
-                    percentageChart.options.scales.yAxes[0].ticks.max = 0.25;
-                    percentageChart.update();
+                    chartGroup.percentFatalChart = CreateBarPlot('percentFatalChart' + chartGroup.groupIndex, tempDates, [percentage], 'Death Percentage');
+                    chartGroup.percentFatalChart.options.scales.yAxes[0].ticks.max = 25;
+                    chartGroup.percentFatalChart.options.scales.yAxes[0].scaleLabel.labelString = 'Percent Fatal'
+                    chartGroup.percentFatalChart.options.scales.yAxes[0].scaleLabel.display = true;
+                    chartGroup.percentFatalChart.update();
                 }
                 else {
-                    percentageChart.data.labels = tempDates;
-                    percentageChart.data.datasets[0].data = percentageData;
-                    percentageChart.update();
+                    chartGroup.percentFatalChart.data.labels = tempDates;
+                    chartGroup.percentFatalChart.data.datasets[0].data = percentageData;
+                    chartGroup.percentFatalChart.update();
                 }
             }
 
-            function GetStateData(stateName) {
-                $.getJSON('@Url.Action("GetStateData")?state=' + stateName + '&country=' + self.selectedCountry.name).done(result => {
+            function GetStateData(chartGroup) {
+                $.getJSON('@Url.Action("GetStateData")?state=' + chartGroup.selectedState + '&country=' + chartGroup.selectedCountry.name).done(result => {
                     if (!result.success) {
                         console.error('State: ' + result.errorMessage);
                         return;
@@ -182,11 +184,13 @@
                         backgroundColor: colors[7],
                         borderColor: colors[7]
                     };
-                    if (!confirmedChart) {
-                        confirmedChart = CreateBarPlot('stateConfirmedChart', result.dates, [confirmed], stateName + ' New Confirmed Cases');
+                    if (!chartGroup.confirmedChart) {
+                        chartGroup.confirmedChart = CreateBarPlot('stateConfirmedChart' + chartGroup.groupIndex, result.dates, [confirmed], chartGroup.selectedState + ' New Confirmed Cases');
                     } else {
-                        UpdateChart(confirmedChart, confirmed, stateName + ' New Confirmed Cases');
+                        UpdateChart(chartGroup.confirmedChart, confirmed, chartGroup.selectedState + ' New Confirmed Cases');
                     }
+
+
 
                     deathData = result.deaths.data;
                     var deaths = {
@@ -194,21 +198,65 @@
                         backgroundColor: colors[8],
                         borderColor: colors[8]
                     };
-                    if (!deathChart) {
-                        deathChart = CreateBarPlot('stateDeathsChart', result.dates, [deaths], stateName + ' New Deaths');
+                    if (!chartGroup.deathChart) {
+                        chartGroup.deathChart = CreateBarPlot('stateDeathsChart' + chartGroup.groupIndex, result.dates, [deaths], chartGroup.selectedState + ' New Deaths');
                     } else {
-                        UpdateChart(deathChart, deaths, stateName + ' New Deaths');
+                        UpdateChart(chartGroup.deathChart, deaths, chartGroup.selectedState + ' New Deaths');
                     }
 
-                    UpdatePercentageChart();
+                    var percentInfectedData = [];
+                    var total = 0;
+                    result.confirmedCases.data.forEach((x, i) => {
+                        total += x;
+                        percentInfectedData[i] = total / result.deaths.population * 100;
+                    });
+
+                    if (!chartGroup.percentInfectedChart) {
+                        var percentInfectedDataSet = [
+                            {
+                                data: percentInfectedData,
+                                backgroundColor: colors[17],
+                                borderColor: colors[17]
+                            }
+                        ];
+                        chartGroup.percentInfectedChart = CreateBarPlot('percentInfectedChart' + chartGroup.groupIndex, result.dates, percentInfectedDataSet, chartGroup.selectedState + ' Percent of Population That Has Been (Confirmed) Infected', 'line');
+                    } else {
+                        chartGroup.percentInfectedChart.data.datasets[0].data = percentInfectedData;
+                        chartGroup.percentInfectedChart.options.title.text = chartGroup.selectedState + ' Percent of Population That Has Been (Confirmed) Infected';
+                        chartGroup.percentInfectedChart.update();
+                    }
+
+                    UpdatePercentFatalChart(chartGroup);
                 });
             }
 
-            $('select').on('change', () => {
-                GetStateData($('#stateSelect').val());
-            });
+            $.getJSON('@Url.Action("GetCountryList")').done(result => {
+                if (!result.success) {
+                    console.error('Country: ' + result.errorMessage);
+                    return;
+                }
+                self = {
+                    countries: result.countries,
+                    selectedCountry: {},
+                    chartGroups: [{ groupIndex: 0, selectedCountry: {}, selectedState: {}, offset: 15, range: 5 }],
+                    updateCharts: GetStateData,
+                    updateFatality: UpdatePercentFatalChart
+                };
 
-            $('.slider').on('change', () => { UpdatePercentageChart(); });
+                ko.track(self);
+                ko.track(self.chartGroups[0]);
+                self.countries.forEach(x => { if (x.name == 'US') self.chartGroups[0].selectedCountry = x; });
+
+                ko.applyBindings(self);
+                self.chartGroups[0].selectedState = 'Alabama';
+                GetStateData(self.chartGroups[0]);
+
+                //$('select').on('change', () => {
+                //    GetStateData($('#stateSelect').val());
+                //});
+
+                //$('.slider').on('change', () => { UpdatePercentFatalChart(); });
+            });
         });
     </script>
 }
