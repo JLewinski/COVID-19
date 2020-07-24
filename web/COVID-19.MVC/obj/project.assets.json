@@ -1,0 +1,91 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETCoreApp,Version=v3.1": {
+      "COVID-19.Data/1.0.0": {
+        "type": "project",
+        "framework": ".NETStandard,Version=v2.0",
+        "compile": {
+          "bin/placeholder/COVID-19.Data.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/COVID-19.Data.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "COVID-19.Data/1.0.0": {
+      "type": "project",
+      "path": "../../Common/COVID-19.Data/COVID-19.Data.csproj",
+      "msbuildProject": "../../Common/COVID-19.Data/COVID-19.Data.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETCoreApp,Version=v3.1": [
+      "COVID-19.Data >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\jdlew\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\jdlew\\Documents\\GitHub\\COVID-19\\web\\COVID-19.MVC\\COVID-19.MVC.csproj",
+      "projectName": "COVID-19.MVC",
+      "projectPath": "C:\\Users\\jdlew\\Documents\\GitHub\\COVID-19\\web\\COVID-19.MVC\\COVID-19.MVC.csproj",
+      "packagesPath": "C:\\Users\\jdlew\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\jdlew\\Documents\\GitHub\\COVID-19\\web\\COVID-19.MVC\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\jdlew\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "netcoreapp3.1"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "projectReferences": {
+            "C:\\Users\\jdlew\\Documents\\GitHub\\COVID-19\\Common\\COVID-19.Data\\COVID-19.Data.csproj": {
+              "projectPath": "C:\\Users\\jdlew\\Documents\\GitHub\\COVID-19\\Common\\COVID-19.Data\\COVID-19.Data.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "netcoreapp3.1": {
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.AspNetCore.App": {
+            "privateAssets": "none"
+          },
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.302\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

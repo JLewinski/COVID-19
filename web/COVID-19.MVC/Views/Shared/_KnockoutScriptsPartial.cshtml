@@ -1,0 +1,17 @@
+﻿<environment include="Development">
+    <script src="~/lib/knockout/knockout-latest.debug.js"></script>
+    <script src="~/lib/knockout/knockout-es5.js"></script>
+</environment>
+<environment exclude="Development">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.1/knockout-latest.min.js"
+            asp-fallback-src="~/lib/knockout/knockout-latest.min.js"
+            asp-fallback-test="Window.ko"
+            crossorigin="anonymous"
+            integrity="sha384-PA7LgTHoYGwvEy2evWvC3sNOQlmK/vfk//sStiSk3QK3fUDO8oN3VKvHgSPyVKqx">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout-es5/0.4.6/knockout-es5.min.js"
+            asp-fallback-src="~/lib/knockout/knockout-es5-min.js"
+            asp-fallback-test="ko.track"
+            crossorigin="anonymous"
+            integrity="sha384-O1tr+ltDTIROfttbOCyca9CRDu8vI6htN57UCeco9X/nVk4jcIc1ybc0TegO4ZSo"></script>
+</environment>

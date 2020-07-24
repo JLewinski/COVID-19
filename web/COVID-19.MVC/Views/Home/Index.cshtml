@@ -1,0 +1,197 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
+<div class="row">
+    <div class="col">
+        <canvas id="confirmedCasesChart" width="400" height="400"></canvas>
+    </div>
+    <div class="col">
+        <canvas id="deathsChart" width="400" height="400"></canvas>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <canvas id="confirmedCasesChartUS" width="400" height="400"></canvas>
+    </div>
+    <div class="col">
+        <canvas id="deathsChartUS" width="400" height="400"></canvas>
+    </div>
+</div>
+<div class="form-group">
+    <select id="stateSelect" class="form-control">
+        <option>Alabama</option>
+        <option>California</option>
+        <option>Colorado</option>
+        <option>Florida</option>
+        <option>Georgia</option>
+        <option>Maryland</option>
+        <option>New York</option>
+        <option>Ohio</option>
+    </select>
+    <button id="getStateInfoButton" class="btn btn-primary">Run</button>
+</div>
+<div class="row">
+    <div class="col">
+        <canvas id="stateConfirmedChart" width="400" height="400"></canvas>
+    </div>
+    <div class="col">
+        <canvas id="stateDeathsChart" width="400" height="400"></canvas>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script src="~/lib/chart/Chart.js"></script>
+    <script type="text/javascript">
+        var colors = [
+            'rgb(0,128,0)',
+            'rgb(141,182,0)',
+            'rgb(0,255,255)',
+            'rgb(253,238,0)',
+            'rgb(0,127,255)',
+            'rgb(0,0,255)',
+            'rgb(0,221,221)',
+            'rgb(242,101,34)',
+            'rgb(12,35,64)',
+            'rgb(150,0,24)',
+            'rgb(150,75,0)',
+            'rgb(0,71,171)',
+            'rgb(255,40,0)',
+            'rgb(255,0,79)',
+            'rgb(255,223,0)',
+            'rgb(0,255,0)',
+            'rgb(128,0,0)',
+            'rgb(0,250,154)',
+            'rgb(255,0,0)',
+            'rgb(255,103,0)'
+        ];
+        $(() => {
+
+            $('#getStateInfoButton').click(() => {
+                GetStateData($('#stateSelect').val());
+            });
+
+            function GetStateData(stateName) {
+                $.getJSON('@Url.Action("GetStateData")?state=' + stateName).done(result => {
+                    if (!result.success) {
+                        console.error(result.errorMessage);
+                        return;
+                    }
+                    
+                    var confirmed = {
+                        data: result.confirmedCases.data,
+                        backgroundColor: colors[7],
+                        borderColor: colors[7]
+                    };
+                    ShowLinePlot('stateConfirmedChart', result.dates, [confirmed], stateName + ' New Confirmed Cases');
+
+                    var deaths = {
+                        data: result.deaths.data,
+                        backgroundColor: colors[9],
+                        borderColor: colors[9]
+                    };
+                    ShowLinePlot('stateDeathsChart', result.dates, [deaths], stateName + ' New Deaths');
+                });
+            }
+
+            function ShowLinePlot(elementId, dates, dataSets, title) {
+                var ctx = document.getElementById(elementId);
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: dataSets
+                    },
+                    options: {
+                        legend: {
+                            display: false
+                        },
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        },
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    }
+                });
+            }
+
+            $.getJSON('@Url.Action("GetAllData")').done(result => {
+                if (!result.success) {
+                    console.log(result.library);
+                    result.library.dates = result.library.dates.map(x => {
+                        var date = new Date(x);
+                        return date.toLocaleDateString();
+                    });
+                    var tempRes = result;
+                    var dataSets = [];
+                    const chartIds = ['confirmedCasesChart', 'confirmedCasesChartUS', 'deathsChart', 'deathsChartUS']
+                    const keys = Object.keys(result.library.data);
+                    keys.forEach((key, keyIndex) => {
+                        var data = [];
+                        result.library.data[key] = result.library.data[key].filter(d => d.country == "US" && (d.state == "" || d.state == "Alabama"));
+                        result.library.data[key].forEach((x, dataIndex) => {
+                            var label = x.key ? x.key : x.state ? (x.state + ' ' + x.country) : x.country;
+                            var currentData = x.data;
+                            var total = 0;
+                            currentData.forEach((d, i) => {
+                                var tempTotal = currentData[i];
+                                currentData[i] -= total;
+                                if (currentData[i] < 0) {
+                                    currentData[i] = 0;
+                                }
+                                total = tempTotal;
+                            });
+                            var temp = {
+                                label: label,
+                                data: currentData,
+                                backgroundColor: colors[dataIndex % colors.length],
+                                borderColor: colors[dataIndex & colors.length]
+                            };
+                            data.push(temp);
+                        });
+
+                        var ctx = document.getElementById(chartIds[keyIndex]);
+                        new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: result.library.dates,
+                                datasets: data
+                            },
+                            options: {
+                                legend: {
+                                    display: false
+                                },
+                                scales: {
+                                    yAxes: [{
+                                        ticks: {
+                                            beginAtZero: true
+                                        }
+                                    }]
+                                },
+                                title: {
+                                    display: true,
+                                    text: key
+                                }
+                            }
+                        });
+
+                        dataSets.push(data);
+                    });
+                } else {
+                    //console.error(result.errorMessage);
+                }
+            });
+        });
+    </script>
+}

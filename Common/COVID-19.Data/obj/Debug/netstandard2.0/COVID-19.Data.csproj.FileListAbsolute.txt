@@ -1,0 +1,9 @@
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\bin\Debug\netstandard2.0\COVID-19.Data.deps.json
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\bin\Debug\netstandard2.0\COVID-19.Data.dll
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\obj\Debug\netstandard2.0\COVID-19.Data.csprojAssemblyReference.cache
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\obj\Debug\netstandard2.0\COVID-19.Data.AssemblyInfoInputs.cache
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\obj\Debug\netstandard2.0\COVID-19.Data.AssemblyInfo.cs
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\bin\Debug\netstandard2.0\COVID-19.Data.pdb
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\obj\Debug\netstandard2.0\COVID-19.Data.csproj.CoreCompileInputs.cache
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\obj\Debug\netstandard2.0\COVID-19.Data.dll
+C:\Users\jdlew\Documents\GitHub\COVID-19\Common\COVID-19.Data\obj\Debug\netstandard2.0\COVID-19.Data.pdb
