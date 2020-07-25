@@ -53,8 +53,8 @@ $(() => {
     }
 
     function UpdateChart(chart, data, title) {
-        chart.data.datasets[0] = data;
-        if (title) chart.options.title.text = title;
+        chart.data.datasets[0].data = data;
+        chart.options.title.text = title;
         chart.update();
     }
 
@@ -80,10 +80,11 @@ $(() => {
 
             if (tempData || percentageData.length) {
                 percentageData[dataIndex] = tempData;
-                tempDates[dataIndex++] = dates[index + offset + range / 2];
-                if (!tempDates[dataIndex++]) {
-                    tempDates[dataIndex++] = dates[index + offset + range / 2 - 0.5];
+                tempDates[dataIndex] = dates[index + offset + range / 2];
+                if (!tempDates[dataIndex]) {
+                    tempDates[dataIndex] = dates[index + offset + range / 2 - 0.5];
                 }
+                dataIndex++;
             }
         });
 
@@ -115,13 +116,17 @@ $(() => {
 
     function GetStateData(chartGroup) {
         $.getJSON(stateDataUrl + '?state=' + chartGroup.selectedState + '&country=' + chartGroup.selectedCountry.name).done(result => {
+
             if (!result.success) {
                 console.error('State: ' + result.errorMessage);
                 return;
             }
+
             dates = result.dates;
             chartGroup.confirmedData = result.confirmedCases.data;
+
             var title = chartGroup.selectedState + ' New Confirmed Cases';
+
             if (!chartGroup.confirmedChart) {
                 var confirmed = {
                     data: chartGroup.confirmedData,
@@ -130,13 +135,13 @@ $(() => {
                 };
                 chartGroup.confirmedChart = CreateBarPlot('stateConfirmedChart' + chartGroup.groupIndex, result.dates, [confirmed], title);
             } else {
-                chartGroup.confirmedChart.data.datasets[0].data = chartGroup.confirmedData;
-                chartGroup.confirmedChart.options.title.text = title;
-                chartGroup.confirmedChart.update();
+                UpdateChart(chartGroup.confirmedChart, chartGroup.confirmedData, title);
             }
 
             chartGroup.deathData = result.deaths.data;
+
             title = chartGroup.selectedState + ' New Deaths';
+
             if (!chartGroup.deathChart) {
                 var deaths = {
                     data: chartGroup.deathData,
@@ -145,9 +150,7 @@ $(() => {
                 };
                 chartGroup.deathChart = CreateBarPlot('stateDeathsChart' + chartGroup.groupIndex, result.dates, [deaths], title);
             } else {
-                chartGroup.deathChart.data.datasets[0].data = chartGroup.deathData;
-                chartGroup.deathChart.options.title.text = title;
-                chartGroup.deathChart.update();
+                UpdateChart(chartGroup.deathChart, chartGroup.deathData, title);
             }
 
             var percentInfectedData = [];
@@ -156,7 +159,9 @@ $(() => {
                 total += x;
                 percentInfectedData[i] = total / result.deaths.population * 100;
             });
+
             title = chartGroup.selectedState + ' Percent of Population That Has Been (Confirmed) Infected';
+
             if (!chartGroup.percentInfectedChart) {
                 var percentInfectedDataSet = [
                     {
@@ -167,9 +172,7 @@ $(() => {
                 ];
                 chartGroup.percentInfectedChart = CreateBarPlot('percentInfectedChart' + chartGroup.groupIndex, result.dates, percentInfectedDataSet, title, 'line');
             } else {
-                chartGroup.percentInfectedChart.data.datasets[0].data = percentInfectedData;
-                chartGroup.percentInfectedChart.options.title.text = title;
-                chartGroup.percentInfectedChart.update();
+                UpdateChart(chartGroup.percentInfectedChart, percentInfectedData, title);
             }
 
             UpdatePercentFatalChart(chartGroup);
