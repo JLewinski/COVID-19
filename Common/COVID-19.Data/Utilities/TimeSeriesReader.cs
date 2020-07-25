@@ -141,8 +141,8 @@ namespace COVID_19.Data.Utilities
         public static async Task<TimeSeriesData> ReadState(string state, string country, bool IsConfirmedCases)
         {
             var all = country == "US" ? await ReadData(false, IsConfirmedCases) : await ReadData(true, IsConfirmedCases);
-
-            return all.Where(x => x.Country == country && x.State == (state ?? string.Empty)).Aggregate((x, y) =>
+            state = state ?? string.Empty;
+            return all.Where(x => x.Country == country && (x.State == state || state == string.Empty)).Aggregate((x, y) =>
             {
                 var data = new int[x.Data.Length];
                 for (int i = 0; i < data.Length; i++)
@@ -165,10 +165,10 @@ namespace COVID_19.Data.Utilities
         public static async Task<TimeSeriesData> ReadStateChanges(string state, string country, bool IsConfirmedCases)
         {
             var stateData = await ReadState(state, country, IsConfirmedCases);
-            for(int i = stateData.Data.Length - 1; i > 0; i--)
+            for (int i = stateData.Data.Length - 1; i > 0; i--)
             {
                 stateData.Data[i] -= stateData.Data[i - 1];
-                if(stateData.Data[i] < 0)
+                if (stateData.Data[i] < 0)
                 {
                     stateData.Data[i] = 0;
                 }
@@ -179,8 +179,8 @@ namespace COVID_19.Data.Utilities
         public static async Task<string[]> GetStateNamesArray(string country = "US")
         {
             var allStates = await ReadData(country != "US", true);
-            var dic = new Dictionary<string, bool>();
-            foreach(var name in allStates.Where(x => x.Country == country).Select(x => x.State))
+            var dic = new Dictionary<string, bool> { { "", true } };
+            foreach (var name in allStates.Where(x => x.Country == country).Select(x => x.State))
             {
                 if (!dic.ContainsKey(name))
                 {
@@ -198,10 +198,9 @@ namespace COVID_19.Data.Utilities
             {
                 if (!dic.ContainsKey(name.Country))
                 {
-                    dic.Add(name.Country, new Dictionary<string, bool>());
-                    dic[name.Country].Add(name.State, true);
+                    dic.Add(name.Country, new Dictionary<string, bool> { { string.Empty, true } });
                 }
-                else
+                if (!dic[name.Country].ContainsKey(name.State))
                 {
                     dic[name.Country].Add(name.State, true);
                 }

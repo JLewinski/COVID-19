@@ -40,7 +40,7 @@
             <option>New York</option>
             <option>Ohio</option>
         </select>
-        <select id="countrySelect" class="form-control" data-bind="options: $root.countries, optionsText: 'name', value: selectedCountry">
+        <select id="countrySelect" class="form-control" data-bind="options: $root.countries, optionsText: 'name', value: selectedCountry, event: { change: $root.updateCharts }">
             <option>US</option>
         </select>
 
