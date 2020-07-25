@@ -2,47 +2,50 @@
     ViewData["Title"] = "Home Page";
 }
 
-    <div data-bind="foreach: chartGroups">
-        <div class="row">
-            <div class="col-md-4 col-lg-3">
-                <canvas data-bind="attr: { id: 'stateConfirmedChart' + groupIndex }" id="stateConfirmedChart" width="400" height="400"></canvas>
-            </div>
-            <div class="col-md-4 col-lg-3">
-                <canvas data-bind="attr: { id: 'stateDeathsChart' + groupIndex }" id="stateDeathsChart" width="400" height="400"></canvas>
-            </div>
-            <div class="col-md-4 col-lg-3">
-                <canvas data-bind="attr: { id: 'percentInfectedChart' + groupIndex }" id="percentInfectedChart" width="400" height="400"></canvas>
-            </div>
-            <div class="col-md-4 col-lg-3">
-                <canvas data-bind="attr: { id: 'percentFatalChart' + groupIndex }" id="percentFatalChart" width="400" height="400"></canvas>
-            </div>
+<div data-bind="foreach: chartGroups">
+    <div class="row">
+        <div class="col-md-4 col-lg-3">
+            <canvas data-bind="attr: { id: 'stateConfirmedChart' + groupIndex }" id="stateConfirmedChart" width="400" height="400"></canvas>
         </div>
-        <div class="row">
-            <select id="stateSelect" class="form-control" data-bind="options: selectedCountry.states, value: selectedState, event: { change: $root.updateCharts }" value="Alabama">
-                <option>Alabama</option>
-                <option>California</option>
-                <option>Colorado</option>
-                <option>Florida</option>
-                <option>Georgia</option>
-                <option>Maryland</option>
-                <option>New York</option>
-                <option>Ohio</option>
-            </select>
-            <select id="countrySelect" class="form-control" data-bind="options: $root.countries, optionsText: 'name', value: selectedCountry">
-                <option>US</option>
-            </select>
-            <div class="col align-self-end text-right">
-                <div class="slidecontainer">
-                    <label>Offset (<span data-bind="text: offset"></span>)</label>
-                    <input type="range" min="0" max="30" value="15" class="slider" data-bind="value: offset, event: {change: $root.updateFatality}" />
-                </div>
-                <div class="slidecontainer">
-                    <label>Range (<span data-bind="text: range"></span>)</label>
-                    <input type="range" min="1" max="20" value="5" class="slider" data-bind="value: range, event: {change: $root.updateFatality}" />
-                </div>
+        <div class="col-md-4 col-lg-3">
+            <canvas data-bind="attr: { id: 'stateDeathsChart' + groupIndex }" id="stateDeathsChart" width="400" height="400"></canvas>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <canvas data-bind="attr: { id: 'percentInfectedChart' + groupIndex }" id="percentInfectedChart" width="400" height="400"></canvas>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <canvas data-bind="attr: { id: 'percentFatalChart' + groupIndex }" id="percentFatalChart" width="400" height="400"></canvas>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col align-self-end text-right">
+            <div class="slidecontainer">
+                <label>Offset (<span data-bind="text: offset"></span>)</label>
+                <input type="range" min="0" max="30" value="15" class="slider" data-bind="value: offset, event: {change: $root.updateFatality}" />
+            </div>
+            <div class="slidecontainer">
+                <label>Range (<span data-bind="text: range"></span>)</label>
+                <input type="range" min="1" max="20" value="5" class="slider" data-bind="value: range, event: {change: $root.updateFatality}" />
             </div>
         </div>
     </div>
+    <div class="row">
+        <select id="stateSelect" class="form-control" data-bind="options: selectedCountry.states, value: selectedState, event: { change: $root.updateCharts }" value="Alabama">
+            <option>Alabama</option>
+            <option>California</option>
+            <option>Colorado</option>
+            <option>Florida</option>
+            <option>Georgia</option>
+            <option>Maryland</option>
+            <option>New York</option>
+            <option>Ohio</option>
+        </select>
+        <select id="countrySelect" class="form-control" data-bind="options: $root.countries, optionsText: 'name', value: selectedCountry">
+            <option>US</option>
+        </select>
+
+    </div>
+</div>
 <div class="row">
     <small>All data from <a href="https://github.com/CSSEGISandData/COVID-19">Johns Hopkins University</a></small>
 </div>
@@ -74,14 +77,7 @@
             'rgb(255,0,0)',
             'rgb(255,103,0)'
         ];
-        var self;
         var dates;
-        var confirmedChart;
-        var confirmedData;
-        var deathChart;
-        var deathData;
-        var percentFatalChart;
-        var percentInfectedChart;
 
         $(() => {
 
@@ -125,23 +121,23 @@
                 var percentageData = [];
                 var tempDates = [];
                 var dataIndex = 0;
-                confirmedData.forEach((x, index) => {
+                chartGroup.confirmedData.forEach((x, index) => {
                     var confirmed = 0;
                     var deaths = 0;
 
-                    if (range + offset >= deathData.length) {
+                    if (range + offset >= chartGroup.deathData.length) {
                         return;
                     }
 
                     for (var i = 0; i < range; i++) {
-                        confirmed += confirmedData[index + i];
-                        deaths += deathData[index + i + offset];
+                        confirmed += chartGroup.confirmedData[index + i];
+                        deaths += chartGroup.deathData[index + i + offset];
                     }
                     var tempData = confirmed ? deaths / confirmed * 100 : deaths * 100;
 
                     if (tempData || percentageData.length) {
                         percentageData[dataIndex] = tempData;
-                        tempDates[dataIndex++] = dates[index];// dates[index + offset + range / 2] ?? dates[index + offset + range / 2 - 0.5];
+                        tempDates[dataIndex++] = dates[index + offset + range / 2] ?? dates[index + offset + range / 2 - 0.5];
                     }
                 });
 
@@ -178,30 +174,34 @@
                         return;
                     }
                     dates = result.dates;
-                    confirmedData = result.confirmedCases.data;
-                    var confirmed = {
-                        data: confirmedData,
-                        backgroundColor: colors[7],
-                        borderColor: colors[7]
-                    };
+                    chartGroup.confirmedData = result.confirmedCases.data;
+                    var title = chartGroup.selectedState + ' New Confirmed Cases';
                     if (!chartGroup.confirmedChart) {
-                        chartGroup.confirmedChart = CreateBarPlot('stateConfirmedChart' + chartGroup.groupIndex, result.dates, [confirmed], chartGroup.selectedState + ' New Confirmed Cases');
+                        var confirmed = {
+                            data: chartGroup.confirmedData,
+                            backgroundColor: colors[7],
+                            borderColor: colors[7]
+                        };
+                        chartGroup.confirmedChart = CreateBarPlot('stateConfirmedChart' + chartGroup.groupIndex, result.dates, [confirmed], title);
                     } else {
-                        UpdateChart(chartGroup.confirmedChart, confirmed, chartGroup.selectedState + ' New Confirmed Cases');
+                        chartGroup.confirmedChart.data.datasets[0].data = chartGroup.confirmedData;
+                        chartGroup.confirmedChart.options.title.text = title;
+                        chartGroup.confirmedChart.update();
                     }
 
-
-
-                    deathData = result.deaths.data;
-                    var deaths = {
-                        data: deathData,
-                        backgroundColor: colors[8],
-                        borderColor: colors[8]
-                    };
+                    chartGroup.deathData = result.deaths.data;
+                    title = chartGroup.selectedState + ' New Deaths';
                     if (!chartGroup.deathChart) {
-                        chartGroup.deathChart = CreateBarPlot('stateDeathsChart' + chartGroup.groupIndex, result.dates, [deaths], chartGroup.selectedState + ' New Deaths');
+                        var deaths = {
+                            data: chartGroup.deathData,
+                            backgroundColor: colors[8],
+                            borderColor: colors[8]
+                        };
+                        chartGroup.deathChart = CreateBarPlot('stateDeathsChart' + chartGroup.groupIndex, result.dates, [deaths], title);
                     } else {
-                        UpdateChart(chartGroup.deathChart, deaths, chartGroup.selectedState + ' New Deaths');
+                        chartGroup.deathChart.data.datasets[0].data = chartGroup.deathData;
+                        chartGroup.deathChart.options.title.text = title;
+                        chartGroup.deathChart.update();
                     }
 
                     var percentInfectedData = [];
@@ -210,19 +210,19 @@
                         total += x;
                         percentInfectedData[i] = total / result.deaths.population * 100;
                     });
-
+                    title = chartGroup.selectedState + ' Percent of Population That Has Been (Confirmed) Infected';
                     if (!chartGroup.percentInfectedChart) {
                         var percentInfectedDataSet = [
                             {
                                 data: percentInfectedData,
-                                backgroundColor: colors[17],
-                                borderColor: colors[17]
+                                backgroundColor: colors[14],
+                                borderColor: colors[14]
                             }
                         ];
-                        chartGroup.percentInfectedChart = CreateBarPlot('percentInfectedChart' + chartGroup.groupIndex, result.dates, percentInfectedDataSet, chartGroup.selectedState + ' Percent of Population That Has Been (Confirmed) Infected', 'line');
+                        chartGroup.percentInfectedChart = CreateBarPlot('percentInfectedChart' + chartGroup.groupIndex, result.dates, percentInfectedDataSet, title, 'line');
                     } else {
                         chartGroup.percentInfectedChart.data.datasets[0].data = percentInfectedData;
-                        chartGroup.percentInfectedChart.options.title.text = chartGroup.selectedState + ' Percent of Population That Has Been (Confirmed) Infected';
+                        chartGroup.percentInfectedChart.options.title.text = title;
                         chartGroup.percentInfectedChart.update();
                     }
 
@@ -238,24 +238,23 @@
                 self = {
                     countries: result.countries,
                     selectedCountry: {},
-                    chartGroups: [{ groupIndex: 0, selectedCountry: {}, selectedState: {}, offset: 15, range: 5 }],
+                    chartGroups: [{ groupIndex: 0, selectedCountry: {}, selectedState: {}, offset: 15, range: 5 },
+                        { groupIndex: 1, selectedCountry: {}, selectedState: {}, offset: 15, range: 5 }],
                     updateCharts: GetStateData,
                     updateFatality: UpdatePercentFatalChart
                 };
 
                 ko.track(self);
                 ko.track(self.chartGroups[0]);
+                ko.track(self.chartGroups[1]);
                 self.countries.forEach(x => { if (x.name == 'US') self.chartGroups[0].selectedCountry = x; });
+                self.countries.forEach(x => { if (x.name == 'US') self.chartGroups[1].selectedCountry = x; });
 
                 ko.applyBindings(self);
                 self.chartGroups[0].selectedState = 'Alabama';
                 GetStateData(self.chartGroups[0]);
-
-                //$('select').on('change', () => {
-                //    GetStateData($('#stateSelect').val());
-                //});
-
-                //$('.slider').on('change', () => { UpdatePercentFatalChart(); });
+                self.chartGroups[1].selectedState = 'Georgia';
+                GetStateData(self.chartGroups[1]);
             });
         });
     </script>
