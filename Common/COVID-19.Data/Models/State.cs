@@ -38,7 +38,7 @@ namespace COVID19.Data.Models
                 if (_newData == null)
                 {
                     _newData = new int[TotalData.Length];
-                    for (int i = TotalData.Length; i > 0; i--)
+                    for (int i = TotalData.Length - 1; i > 0; i--)
                     {
                         _newData[i] = TotalData[i] - TotalData[i - 1];
                         if (_newData[i] < 0) _newData[i] = 0;

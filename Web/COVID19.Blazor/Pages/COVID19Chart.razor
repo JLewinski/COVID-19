@@ -1,0 +1,141 @@
+﻿@page "/COVID19Chart"
+
+@using ChartJs.Blazor.ChartJS.BarChart
+@using ChartJs.Blazor.ChartJS.BarChart.Axes
+@using ChartJs.Blazor.ChartJS.Common.Axes
+@using ChartJs.Blazor.ChartJS.Common.Axes.Ticks
+@using ChartJs.Blazor.ChartJS.Common.Properties
+@using ChartJs.Blazor.ChartJS.Common.Wrappers
+@using ChartJs.Blazor.Charts
+@using ChartJs.Blazor.Util
+@using COVID19.Data.Models
+@inject HttpClient Http
+
+<h1>@tempStr</h1>
+<p>Num countries: @numCountries</p>
+<p>Num states: @numStates</p>
+@if (_countries?.Any() ?? false)
+{
+    <button class="btn" @onclick="Update">Update</button>
+}
+<div class="row">
+    <ChartJsBarChart @ref="_barChart"
+                     Config="@_barChartConfig"
+                     Width="600"
+                     Height="300" />
+</div>
+
+
+
+@code
+{
+    private BarConfig _barChartConfig;
+    private ChartJsBarChart _barChart;
+    private Dictionary<string, Country> _countries;
+    private BarDataset<Int32Wrapper> _barData;
+    private string tempStr;
+    private int numCountries = 0;
+    private int numStates = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _barChartConfig = new BarConfig
+            {
+                Options = new BarOptions
+                {
+                    Title = new OptionsTitle
+                    {
+                        Display = true,
+                        Text = "Test Chart"
+                    },
+                    Scales = new BarScales
+                    {
+                        XAxes = new List<CartesianAxis>
+            {
+                            new BarCategoryAxis
+                            {
+                                BarPercentage = 0.75,
+                                BarThickness = BarThickness.Flex
+                            }
+                        },
+                        YAxes = new List<CartesianAxis>
+            {
+                            new BarLinearCartesianAxis
+                            {
+                                Ticks = new LinearCartesianTicks
+                                {
+                                    BeginAtZero = true
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            tempStr = "Setting up Data";
+            _barChartConfig.Data.Labels = new List<string>(new[] { 1, 2, 3, 4 }.Select(x => x.ToString()));
+
+            _barData = new BarDataset<Int32Wrapper>
+            {
+                Label = "Alabama",
+                BackgroundColor = ColorUtil.RandomColorString(),
+                BorderWidth = 0,
+                HoverBackgroundColor = ColorUtil.RandomColorString(),
+                HoverBorderColor = ColorUtil.RandomColorString(),
+                HoverBorderWidth = 1,
+                BorderColor = "#ffffff"
+            };
+
+            _barData.AddRange(new[] { 1, 2, 3, 4 }.Wrap());
+
+            _barChartConfig.Data.Datasets.Add(_barData);
+            tempStr = "Complete";
+            tempStr = "Getting Countries";
+            _countries = await COVID19.Data.Utilities.TimeSeries.HttpTimeSeriesReader.GetConfirmedCases(Http);
+
+            tempStr = "Getting Dates";
+            var tempDate = DateTime.Parse(State.StartDate);
+            int length = _countries.First().Value.States.First().Value.NewData.Length;
+            var dates = new List<string>(length);
+            for (int i = 0; i < length; i++)
+            {
+                dates.Add(tempDate.ToShortDateString());
+                tempDate = tempDate.AddDays(1);
+            }
+
+            _barChartConfig.Data.Labels.RemoveAll(_ => true);
+            _barChartConfig.Data.Labels.AddRange(dates);
+        }
+        catch (Exception e)
+        {
+            tempStr = e.Message;
+        }
+    }
+
+
+    private async Task Update()
+    {
+        try
+        {
+
+
+            numCountries = _countries.Count();
+            numStates = _countries.Values.First().States.Count();
+            var alabama = _countries["US"].States["Alabama"];
+
+            tempStr = "Getting Dates";
+
+
+            _barData.RemoveAll(x => true);
+            _barData.AddRange(alabama.NewData.Wrap());
+
+            await _barChart.Update();
+        }
+        catch (Exception e)
+        {
+            tempStr = e.Message;
+        }
+    }
+}

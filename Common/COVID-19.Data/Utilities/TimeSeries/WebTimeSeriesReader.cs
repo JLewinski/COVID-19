@@ -87,5 +87,10 @@ namespace COVID19.Data.Utilities.TimeSeries
             }
             return new StreamReader(new MemoryStream(data));
         }
+
+        public override Task<StreamReader> GetStreamAsync()
+        {
+            return Task.Run(() => GetStream());
+        }
     }
 }

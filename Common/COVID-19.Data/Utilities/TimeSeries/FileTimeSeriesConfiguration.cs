@@ -1,4 +1,5 @@
 using System.IO;
+using System.Threading.Tasks;
 
 namespace COVID19.Data.Utilities.TimeSeries
 {
@@ -13,6 +14,11 @@ namespace COVID19.Data.Utilities.TimeSeries
         public override StreamReader GetStream()
         {
             return new StreamReader(_path);
+        }
+
+        public override Task<StreamReader> GetStreamAsync()
+        {
+            return Task.Run(() => GetStream());
         }
     }
 }

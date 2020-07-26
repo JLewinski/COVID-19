@@ -17,7 +17,7 @@ namespace COVID19.Data.Utilities.TimeSeries
         public async Task<Dictionary<string, Country>> GetCountriesAsync()
         {
             var countryDictionary = new Dictionary<string, Country>();
-            using (var streamReader = GetStream())
+            using (var streamReader = await GetStreamAsync())
             {
                 var line = await streamReader.ReadLineAsync();
                 while ((line = await streamReader.ReadLineAsync()) != null)
@@ -27,7 +27,7 @@ namespace COVID19.Data.Utilities.TimeSeries
                     {
                         if (i % 2 == 1)
                         {
-                            data[i] = data[i].Replace(',', ';');
+                            data[i] = $"\"{data[i].Replace(',', ';')}\"";
                         }
                     }
                     line = data.Aggregate((x, y) => x + y);
@@ -44,6 +44,7 @@ namespace COVID19.Data.Utilities.TimeSeries
                     if (!country.States.TryGetValue(stateName, out var state))
                     {
                         state = GetState(data);
+                        country.States.Add(stateName, state);
                     }
                     else
                     {
@@ -56,6 +57,7 @@ namespace COVID19.Data.Utilities.TimeSeries
                         {
                             state.TotalData[i] += tempState.TotalData[i];
                         }
+                        country.States[stateName] = state;
                     }
                 }
             }
@@ -73,5 +75,6 @@ namespace COVID19.Data.Utilities.TimeSeries
         };
 
         public abstract StreamReader GetStream();
+        public abstract Task<StreamReader> GetStreamAsync();
     }
 }
