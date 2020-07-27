@@ -18,6 +18,7 @@ namespace COVID19.Data.Utilities.TimeSeries
             {
                 CountryIndex = 7,
                 StateIndex = 6,
+                CityIndex = 5,
                 DataStartIndex = 11,
                 KeyIndex = 10,
                 LatitudeIndex = 8,
@@ -35,6 +36,7 @@ namespace COVID19.Data.Utilities.TimeSeries
             {
                 CountryIndex = 7,
                 StateIndex = 6,
+                CityIndex = 5,
                 DataStartIndex = 12,
                 LatitudeIndex = 8,
                 LongitudeIndex = 9,
@@ -65,14 +67,14 @@ namespace COVID19.Data.Utilities.TimeSeries
             _client = client;
         }
 
-        public static async Task<Dictionary<string, Country>> GetConfirmedCases(HttpClient client)
+        public static async Task<Dictionary<string, State>> GetConfirmedCases(HttpClient client)
         {
             return await Configurations.Take(2)
                 .Select(x => new HttpTimeSeriesReader(x.config, x.url, client).GetCountriesAsync())
                 .Aggregate(async (a, b) => DataExtensions.CombineCountries(await a, await b));
         }
 
-        public static async Task<Dictionary<string, Country>> GetDeathCases(HttpClient client)
+        public static async Task<Dictionary<string, State>> GetDeathCases(HttpClient client)
         {
             return await Configurations.Skip(2)
                 .Select(x => new HttpTimeSeriesReader(x.config, x.url, client).GetCountriesAsync())
@@ -86,14 +88,7 @@ namespace COVID19.Data.Utilities.TimeSeries
 
         public override async Task<StreamReader> GetStreamAsync()
         {
-            try
-            {
-                return new StreamReader(await _client.GetStreamAsync(_path));
-            }
-            catch(Exception e)
-            {
-                throw;
-            }
+            return new StreamReader(await _client.GetStreamAsync(_path));
         }
     }
 }

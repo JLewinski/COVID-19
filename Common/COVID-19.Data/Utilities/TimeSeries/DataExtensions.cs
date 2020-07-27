@@ -25,22 +25,22 @@ namespace COVID19.Data.Utilities
             return stateA;
         }
 
-        public static Dictionary<string, Country> CombineCountries(this Dictionary<string, Country> a, Dictionary<string, Country> b)
+        public static Dictionary<string, State> CombineCountries(this Dictionary<string, State> a, Dictionary<string, State> b)
         {
             var countryDictionary = a;
             foreach (var countryB in b.Values)
             {
                 if (countryDictionary.TryGetValue(countryB.Name, out var countryA))
                 {
-                    foreach (var stateB in countryB.States)
+                    foreach (var stateB in countryB.Children)
                     {
-                        if (countryA.States.TryGetValue(stateB.Key, out var stateA))
+                        if (countryA.Children.TryGetValue(stateB.Key, out var stateA))
                         {
-                            countryA.States[stateB.Key] = stateA.CombineStates(stateB.Value);
+                            countryA.Children[stateB.Key] = stateA.CombineStates(stateB.Value);
                         }
                         else
                         {
-                            countryA.States.Add(stateB.Key, stateB.Value);
+                            countryA.Children.Add(stateB.Key, stateB.Value);
                         }
                     }
                     countryDictionary[countryA.Name] = countryA;

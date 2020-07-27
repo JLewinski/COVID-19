@@ -14,9 +14,9 @@ namespace COVID19.Data.Utilities.TimeSeries
             _config = config;
         }
 
-        public async Task<Dictionary<string, Country>> GetCountriesAsync()
+        public async Task<Dictionary<string, State>> GetCountriesAsync()
         {
-            var countryDictionary = new Dictionary<string, Country>();
+            var countryDictionary = new Dictionary<string, State>();
             using (var streamReader = await GetStreamAsync())
             {
                 var line = await streamReader.ReadLineAsync();
@@ -27,7 +27,7 @@ namespace COVID19.Data.Utilities.TimeSeries
                     {
                         if (i % 2 == 1)
                         {
-                            data[i] = $"\"{data[i].Replace(',', ';')}\"";
+                            data[i] = $"{data[i].Replace(',', ';')}";
                         }
                     }
                     line = data.Aggregate((x, y) => x + y);
@@ -36,43 +36,88 @@ namespace COVID19.Data.Utilities.TimeSeries
                     var countryName = data[_config.CountryIndex].Replace(';', ',');
                     if (!countryDictionary.TryGetValue(countryName, out var country))
                     {
-                        country = new Country(countryName);
+                        country = new State { Name = countryName };
                         countryDictionary.Add(countryName, country);
                     }
 
-                    var stateName = data[_config.StateIndex];
-                    if (!country.States.TryGetValue(stateName, out var state))
+                    string stateName = data[_config.StateIndex];
+                    var exists = country.Children.TryGetValue(stateName, out var state);
+                    var tempState = GetState(data, state ?? new State { Name = stateName, Key = $"{stateName}, {countryName}" });
+
+                    if (tempState.Name == string.Empty)
                     {
-                        state = GetState(data);
-                        country.States.Add(stateName, state);
+                        if (country.IsSet)
+                        {
+                            throw new System.Exception("The country was already manually set but it is trying to be set again");
+                        }
+
+                        tempState.Name = countryName;
+                        tempState.Children = country.Children;
+                        countryDictionary[countryName] = tempState;
+                    }
+                    else if (!exists)
+                    {
+                        country.Children.Add(tempState.Name, tempState);
                     }
                     else
                     {
-                        var tempState = GetState(data);
-                        state.Latitude = (state.Latitude + tempState.Latitude) / 2;
-                        state.Longitude = (state.Longitude + tempState.Longitude) / 2;
-                        state.Population += tempState.Population;
-                        state.Key = $"{stateName}, {countryName}";
-                        for (int i = 0; i < tempState.TotalData.Length; i++)
-                        {
-                            state.TotalData[i] += tempState.TotalData[i];
-                        }
-                        country.States[stateName] = state;
+                        country.Children[tempState.Name] = tempState;
                     }
                 }
             }
             return countryDictionary;
         }
 
-        public State GetState(string[] data) => new State
+        public State GetState(string[] data, State state)
         {
-            Key = _config.KeyIndex >= 0 ? data[_config.KeyIndex].Replace(';', ',') : $"{data[_config.StateIndex]}, {data[_config.CountryIndex]}",
-            Latitude = double.Parse(data[_config.LatitudeIndex]),
-            Longitude = double.Parse(data[_config.LongitudeIndex]),
-            Name = data[_config.StateIndex].Replace(';', ','),
-            Population = _config.PopulationIndex >= 0 ? int.Parse(data[_config.PopulationIndex]) : 0,
-            TotalData = data.Skip(_config.DataStartIndex).Select(x => int.Parse(x)).ToArray()
-        };
+            if (_config.CityIndex < 0)
+            {
+                if (state.IsSet == true)
+                {
+                    throw new System.Exception("State was already manually set and is being set again");
+                }
+                else
+                {
+                    var temp = GetData(data, _config.StateIndex);
+                    temp.Children = state.Children;
+                    return temp;
+                }
+            }
+
+            var city = GetData(data, _config.CityIndex);
+            if (city.Name == string.Empty) //The city isn't really a city (it's a state)
+            {
+                city.Name = state.Name;
+                city.Children = state.Children;
+                return city;
+            }
+            else if (state.Children.ContainsKey(city.Name))
+            {
+                throw new System.Exception("State already contains the city");
+            }
+            else
+            {
+                state.Children.Add(city.Name, city);
+                return state;
+            }
+        }
+
+        public State GetData(string[] data, int nameIndex)
+        {
+            return new State
+            {
+                Key = _config.KeyIndex >= 0
+                    ? data[_config.KeyIndex].Replace(';', ',')
+                    : _config.CityIndex >= 0
+                        ? $"{data[_config.CityIndex]}, {data[_config.StateIndex]}, {data[_config.CountryIndex]}"
+                        : $"{data[_config.StateIndex]}, {data[_config.CountryIndex]}",
+                Latitude = double.Parse(data[_config.LatitudeIndex]),
+                Longitude = double.Parse(data[_config.LongitudeIndex]),
+                Name = data[nameIndex].Replace(';', ','),
+                Population = _config.PopulationIndex >= 0 ? int.Parse(data[_config.PopulationIndex]) : 0,
+                TotalData = data.Skip(_config.DataStartIndex).Select(x => int.Parse(x)).ToArray()
+            };
+        }
 
         public abstract StreamReader GetStream();
         public abstract Task<StreamReader> GetStreamAsync();

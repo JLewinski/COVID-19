@@ -9,133 +9,307 @@
 @using ChartJs.Blazor.Charts
 @using ChartJs.Blazor.Util
 @using COVID19.Data.Models
+@using COVID19.Data.Utilities.TimeSeries
+@using COVID19.Blazor.Models
 @inject HttpClient Http
 
-<h1>@tempStr</h1>
-<p>Num countries: @numCountries</p>
-<p>Num states: @numStates</p>
 @if (_countries?.Any() ?? false)
 {
-    <button class="btn" @onclick="Update">Update</button>
+    <h1>@ErrorMessage</h1>
+    <button class="btn btn-primary" @onclick="AddChart">Add Chart</button>
+    <div>
+        @foreach (var charts in _charts)
+        {
+            <div class="row">
+                @foreach (var chart in charts.Charts)
+                {
+                    <div class="col-md-4">
+                        <ChartJsBarChart @ref="chart.Chart"
+                                         Config="@chart.Config"
+                                         Height="300"
+                                         Width="300" />
+                    </div>
+                }
+            </div>
+            <div class="row">
+
+                <select class="form-control" value="US" @onchange="UpdateCountry(charts)">
+                    @foreach (var country in _countries)
+                    {
+                        <option>@country.Key</option>
+                    }
+                </select>
+                @if (charts.Country.Children.Any())
+                {
+                    <select class="form-control" value="Alabama" @onchange="UpdateState(charts)">
+                        <option value="@CrazyGraphCollection.CRAZY_ID">All</option>
+                        @foreach (var state in charts.Country.Children.Values)
+                        {
+                            <option value="@state.Name">@state.Name</option>
+                        }
+                    </select>
+                }
+                @if (charts.State?.Children.Any() == true)
+                {
+                    <select class="form-control" value="Madison" @onchange="UpdateCity(charts)">
+                        <option value="@CrazyGraphCollection.CRAZY_ID">All</option>
+                        @foreach (var city in charts.State.Children.Values)
+                        {
+                            <option value="@city.Name">@city.Name</option>
+                        }
+                    </select>
+                }
+            </div>
+            <div class="row">
+                <div>
+                    <label>Range (@charts.Range)</label>
+                    <input type="range" class="custom-range" value="@charts.Range" min="1" max="30" @onchange="UpdateRange(charts)" />
+                </div>
+                <div>
+                    <label>Offset (@charts.Offset)</label>
+                    <input type="range" class="custom-range" value="@charts.Offset" min="0" max="30" @onchange="UpdateOffset(charts)" />
+                </div>
+            </div>
+        }
+    </div>
+    @*<div>
+            <ul>
+                @foreach (var c in _countries.Values)
+                {
+                    <li>
+                        <div>
+                            <p>@c.Name</p>
+                            <ul>
+                                @foreach (var s in c.Children)
+                                {
+                                    <li>@s.Key</li>
+                                }
+                            </ul>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>*@
 }
-<div class="row">
-    <ChartJsBarChart @ref="_barChart"
-                     Config="@_barChartConfig"
-                     Width="600"
-                     Height="300" />
-</div>
-
-
+else
+{
+    <p>Loading...</p>
+}
 
 @code
 {
-    private BarConfig _barChartConfig;
-    private ChartJsBarChart _barChart;
-    private Dictionary<string, Country> _countries;
-    private BarDataset<Int32Wrapper> _barData;
-    private string tempStr;
-    private int numCountries = 0;
-    private int numStates = 0;
+    public class CrazyGraphCollection
+    {
+        public const string CRAZY_ID = "JDLEWINSKI";
+        public List<ICustomBarChart> Charts { get; set; }
+        public string DisplayCountry => Country.Name;
+        public State Country { get; set; }
+        public string DisplayState => State?.Name ?? CRAZY_ID;
+        public State State { get; set; }
+        public string DisplayCity => City?.Name ?? CRAZY_ID;
+        public State City { get; set; }
+        public int Range { get; set; }
+        public int Offset { get; set; }
+    }
+
+    private string ErrorMessage = string.Empty;
+    private List<CrazyGraphCollection> _charts;
+    private Dictionary<string, State> _countries;
+    private Dictionary<string, State> _deaths;
+    private List<string> _dates;
 
     protected override async Task OnInitializedAsync()
     {
-        try
+        _charts = new List<CrazyGraphCollection>();
+        _countries = await HttpTimeSeriesReader.GetConfirmedCases(Http);
+        _deaths = await HttpTimeSeriesReader.GetDeathCases(Http);
+
+        var tempDate = DateTime.Parse(State.StartDate);
+        var nowDate = DateTime.Now.Date;
+        _dates = new List<string>();
+        while (tempDate < nowDate)
         {
-            _barChartConfig = new BarConfig
-            {
-                Options = new BarOptions
-                {
-                    Title = new OptionsTitle
-                    {
-                        Display = true,
-                        Text = "Test Chart"
-                    },
-                    Scales = new BarScales
-                    {
-                        XAxes = new List<CartesianAxis>
-            {
-                            new BarCategoryAxis
-                            {
-                                BarPercentage = 0.75,
-                                BarThickness = BarThickness.Flex
-                            }
-                        },
-                        YAxes = new List<CartesianAxis>
-            {
-                            new BarLinearCartesianAxis
-                            {
-                                Ticks = new LinearCartesianTicks
-                                {
-                                    BeginAtZero = true
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-
-            tempStr = "Setting up Data";
-            _barChartConfig.Data.Labels = new List<string>(new[] { 1, 2, 3, 4 }.Select(x => x.ToString()));
-
-            _barData = new BarDataset<Int32Wrapper>
-            {
-                Label = "Alabama",
-                BackgroundColor = ColorUtil.RandomColorString(),
-                BorderWidth = 0,
-                HoverBackgroundColor = ColorUtil.RandomColorString(),
-                HoverBorderColor = ColorUtil.RandomColorString(),
-                HoverBorderWidth = 1,
-                BorderColor = "#ffffff"
-            };
-
-            _barData.AddRange(new[] { 1, 2, 3, 4 }.Wrap());
-
-            _barChartConfig.Data.Datasets.Add(_barData);
-            tempStr = "Complete";
-            tempStr = "Getting Countries";
-            _countries = await COVID19.Data.Utilities.TimeSeries.HttpTimeSeriesReader.GetConfirmedCases(Http);
-
-            tempStr = "Getting Dates";
-            var tempDate = DateTime.Parse(State.StartDate);
-            int length = _countries.First().Value.States.First().Value.NewData.Length;
-            var dates = new List<string>(length);
-            for (int i = 0; i < length; i++)
-            {
-                dates.Add(tempDate.ToShortDateString());
-                tempDate = tempDate.AddDays(1);
-            }
-
-            _barChartConfig.Data.Labels.RemoveAll(_ => true);
-            _barChartConfig.Data.Labels.AddRange(dates);
-        }
-        catch (Exception e)
-        {
-            tempStr = e.Message;
+            _dates.Add(tempDate.ToShortDateString());
+            tempDate = tempDate.AddDays(1);
         }
     }
 
+    private void SetErrorMessage(Exception e)
+    {
+        var ex = e;
+        var sb = new System.Text.StringBuilder();
+        while (ex.InnerException != null)
+        {
+            sb.AppendLine(ex.Message);
+            ex = ex.InnerException;
+        }
+        sb.AppendLine(ex.Message);
+        ErrorMessage = sb.ToString();
+    }
 
-    private async Task Update()
+    private Action<ChangeEventArgs> UpdateRange(CrazyGraphCollection chart)
+    {
+        Action<ChangeEventArgs> temp = async e =>
+        {
+            try
+            {
+                chart.Range = int.Parse((string)e.Value);
+                await Update(chart);
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage(ex);
+            }
+        };
+        return temp;
+    }
+
+    private Action<ChangeEventArgs> UpdateOffset(CrazyGraphCollection chart)
+    {
+        Action<ChangeEventArgs> temp = async e =>
+        {
+            try
+            {
+                chart.Offset = int.Parse((string)e.Value);
+                await Update(chart);
+            }
+            catch (Exception ex)
+            {
+                SetErrorMessage(ex);
+            }
+        };
+        return temp;
+    }
+
+    private Action<ChangeEventArgs> UpdateCountry(CrazyGraphCollection chart)
+    {
+        Action<ChangeEventArgs> temp = async e =>
+        {
+            var name = (string)e.Value;
+            chart.Country = _countries[name];
+            chart.State = null;
+            chart.City = null;
+            await Update(chart);
+        };
+        return temp;
+    }
+
+    private Action<ChangeEventArgs> UpdateState(CrazyGraphCollection chart)
+    {
+        Action<ChangeEventArgs> temp = async e =>
+        {
+            var name = (string)e.Value;
+            chart.State = chart.Country.Children.TryGetValue(name, out var state) ? state : null;
+            chart.City = null;
+            await Update(chart);
+        };
+        return temp;
+    }
+
+    private Action<ChangeEventArgs> UpdateCity(CrazyGraphCollection chart)
+    {
+        Action<ChangeEventArgs> temp = async e =>
+        {
+            var name = (string)e.Value;
+            chart.City = chart.State.Children.TryGetValue(name, out var city) ? city : null;
+            await Update(chart);
+        };
+        return temp;
+    }
+
+    private double[] GetFatalityRate(State confirmed, State deaths, int range, int offset)
+    {
+        var data = new double[confirmed.NewData.Length];
+        for (int i = 0; i < confirmed.NewData.Length - range - offset; i++)
+        {
+            double tempConfirmed = 0;
+            double tempDeaths = 0;
+            for (int j = 0; j < range; j++)
+            {
+                tempConfirmed += confirmed.NewData[i + j];
+                tempDeaths += deaths.NewData[i + j + offset];
+            }
+            data[i] = tempConfirmed > 0 ? tempDeaths / tempConfirmed * 100 : tempDeaths;
+        }
+        return data;
+    }
+
+    public State GetDeathState(string key)
+    {
+        var tempState = new State { Children = _deaths };
+        foreach (var part in key.Split(',', StringSplitOptions.RemoveEmptyEntries).Reverse())
+        {
+            tempState = tempState.Children[part.TrimStart()];
+        }
+        return tempState;
+    }
+
+    public async Task Update(CrazyGraphCollection chartCollection)
     {
         try
         {
 
-
-            numCountries = _countries.Count();
-            numStates = _countries.Values.First().States.Count();
-            var alabama = _countries["US"].States["Alabama"];
-
-            tempStr = "Getting Dates";
+            var state = chartCollection.City ?? chartCollection.State ?? chartCollection.Country;
 
 
-            _barData.RemoveAll(x => true);
-            _barData.AddRange(alabama.NewData.Wrap());
+            var deathState = GetDeathState(state.Key);
+            var deathData = GetFatalityRate(state, deathState, chartCollection.Range, chartCollection.Offset);
 
-            await _barChart.Update();
+            foreach (var chart in chartCollection.Charts)
+            {
+                if (chart is CustomBarChart<Int32Wrapper> confirmationChart)
+                {
+                    confirmationChart.Label = $"Confirmed Cases {state.Key}";
+                    confirmationChart.Clear();
+                    confirmationChart.AddRange(state.NewData.Wrap());
+                }
+                else if (chart is CustomBarChart<DoubleWrapper> deathChart)
+                {
+                    deathChart.Label = $"Fatality Rate {state.Key}";
+                    deathChart.Clear();
+                    deathChart.AddRange(deathData.Wrap());
+                }
+
+                await chart.Update();
+            }
         }
         catch (Exception e)
         {
-            tempStr = e.Message;
+            SetErrorMessage(e);
         }
+
+    }
+
+    private void AddChart()
+    {
+        var country = _countries["US"];
+        var state = country.Children["Alabama"];
+        var county = state.Children["Madison"];
+
+        var confirmedCases = new Models.CustomBarChart<Int32Wrapper>();
+        confirmedCases.Label = $"Confirmed Cases {county.Name}";
+        confirmedCases.Labels = _dates;
+        confirmedCases.AddRange(county.NewData.Wrap());
+
+        var deaths = new Models.CustomBarChart<DoubleWrapper>();
+        deaths.Label = $"Fatality Rate {county.Name}";
+        deaths.Labels = _dates;
+        var deathState = GetDeathState(county.Key);
+        var deathData = GetFatalityRate(county, deathState, 5, 5);
+        deaths.AddRange(deathData.Wrap());
+        if (deaths.Config.Options.Scales.YAxes[0] is BarLinearCartesianAxis yAxis)
+        {
+            yAxis.Ticks.Max = 25;
+        }
+
+        _charts.Add(new CrazyGraphCollection
+        {
+            Charts = new List<ICustomBarChart> { confirmedCases, deaths },
+            Country = country,
+            State = state,
+            City = county,
+            Range = 5,
+            Offset = 5
+        });
     }
 }

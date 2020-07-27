@@ -16,6 +16,7 @@ namespace COVID19.Data.Utilities.TimeSeries
             {
                 CountryIndex = 7,
                 StateIndex = 6,
+                CityIndex = 5,
                 DataStartIndex = 11,
                 KeyIndex = 10,
                 LatitudeIndex = 8,
@@ -33,6 +34,7 @@ namespace COVID19.Data.Utilities.TimeSeries
             {
                 CountryIndex = 7,
                 StateIndex = 6,
+                CityIndex = 5,
                 DataStartIndex = 12,
                 LatitudeIndex = 8,
                 LongitudeIndex = 9,
@@ -64,14 +66,14 @@ namespace COVID19.Data.Utilities.TimeSeries
         {
         }
 
-        public static async Task<Dictionary<string, Country>> GetConfirmedCases()
+        public static async Task<Dictionary<string, State>> GetConfirmedCases()
         {
             return await Configurations.Take(2)
                 .Select(x => new WebTimeSeriesReader(x.config, x.url).GetCountriesAsync())
                 .Aggregate(async (a, b) => DataExtensions.CombineCountries(await a, await b));
         }
 
-        public static async Task<Dictionary<string, Country>> GetDeathCases()
+        public static async Task<Dictionary<string, State>> GetDeathCases()
         {
             return await Configurations.Skip(2)
                 .Select(x => new WebTimeSeriesReader(x.config, x.url).GetCountriesAsync())
